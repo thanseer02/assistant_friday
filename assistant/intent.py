@@ -1,0 +1,69 @@
+from enum import Enum, auto
+from dataclasses import dataclass
+
+class Intent(Enum):
+    GET_TIME = auto()
+    GET_DATE = auto()
+    CALCULATE = auto()
+    OPEN_APP = auto()
+    CREATE_FOLDER = auto()
+    GREETING = auto()
+    HELP = auto()
+    EXIT = auto()
+    UNKNOWN = auto()
+
+@dataclass
+class ParsedIntent:
+    """
+    Holds the structured representation of what the user wants.
+    - intent: The categorized action.
+    - raw_input: The original text the user typed.
+    - entities: Extracted pieces of information (like a folder name or math expression).
+    """
+    intent: Intent
+    raw_input: str
+    entities: dict
+
+class IntentParser:
+    def parse(self, user_input: str) -> ParsedIntent:
+        """
+        Converts raw text into a structured ParsedIntent.
+        Currently uses simple rule-based (keyword) parsing.
+        """
+        normalized = user_input.strip().lower()
+        entities = {}
+        
+        if not normalized:
+            return ParsedIntent(Intent.UNKNOWN, user_input, entities)
+            
+        if normalized in ["hello", "hi"]:
+            return ParsedIntent(Intent.GREETING, user_input, entities)
+            
+        if normalized == "help":
+            return ParsedIntent(Intent.HELP, user_input, entities)
+            
+        if normalized in ["exit", "quit"]:
+            return ParsedIntent(Intent.EXIT, user_input, entities)
+            
+        if "time" in normalized:
+            return ParsedIntent(Intent.GET_TIME, user_input, entities)
+            
+        if "date" in normalized:
+            return ParsedIntent(Intent.GET_DATE, user_input, entities)
+            
+        if "calculate" in normalized:
+            expression = normalized.replace("calculate", "").strip()
+            entities["expression"] = expression
+            return ParsedIntent(Intent.CALCULATE, user_input, entities)
+            
+        if "open" in normalized:
+            app_name = normalized.replace("open", "").strip()
+            entities["app_name"] = app_name
+            return ParsedIntent(Intent.OPEN_APP, user_input, entities)
+            
+        if "create a folder called" in normalized:
+            folder_name = normalized.replace("create a folder called", "").strip()
+            entities["folder_name"] = folder_name
+            return ParsedIntent(Intent.CREATE_FOLDER, user_input, entities)
+            
+        return ParsedIntent(Intent.UNKNOWN, user_input, entities)
