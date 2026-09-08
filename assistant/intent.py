@@ -10,6 +10,10 @@ class Intent(Enum):
     CREATE_FOLDER = auto()
     LIST_FILES = auto()
     CHECK_EXISTS = auto()
+    REMEMBER = auto()
+    RECALL = auto()
+    FORGET = auto()
+    LIST_MEMORIES = auto()
     GREETING = auto()
     HELP = auto()
     EXIT = auto()
@@ -69,5 +73,30 @@ class IntentParser:
             path = normalized.replace("check if", "").replace("exists", "").strip()
             entities["path"] = path
             return ParsedIntent(Intent.CHECK_EXISTS, user_input, entities)
+            
+        if "remember that my" in normalized:
+            # Example: "remember that my favorite editor is VS Code"
+            parts = normalized.split(" is ")
+            if len(parts) == 2:
+                key = parts[0].replace("remember that my", "").strip()
+                value = parts[1].strip()
+                entities["key"] = key
+                entities["value"] = value
+                return ParsedIntent(Intent.REMEMBER, user_input, entities)
+
+        if "what is my" in normalized:
+            # Example: "what is my favorite editor?"
+            key = normalized.replace("what is my", "").replace("?", "").strip()
+            entities["key"] = key
+            return ParsedIntent(Intent.RECALL, user_input, entities)
+
+        if "forget my" in normalized:
+            # Example: "forget my favorite editor"
+            key = normalized.replace("forget my", "").strip()
+            entities["key"] = key
+            return ParsedIntent(Intent.FORGET, user_input, entities)
+
+        if "list memories" in normalized or "what do you remember" in normalized:
+            return ParsedIntent(Intent.LIST_MEMORIES, user_input, entities)
             
         return ParsedIntent(Intent.UNKNOWN, user_input, entities)

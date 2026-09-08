@@ -3,6 +3,7 @@ from commands.calculator import CalculatorTool
 from commands.system import SystemTool
 from commands.files import FilesTool
 from commands.apps import AppsTool
+from memory.memory import MemoryTool
 
 class CommandRouter:
     def __init__(self):
@@ -11,6 +12,7 @@ class CommandRouter:
         self.system = SystemTool()
         self.files = FilesTool()
         self.apps = AppsTool()
+        self.memory = MemoryTool()
 
     def route(self, parsed_intent: ParsedIntent) -> str:
         intent = parsed_intent.intent
@@ -31,6 +33,10 @@ class CommandRouter:
                 "  - create a folder called [name]\n"
                 "  - list files\n"
                 "  - check if [path] exists\n"
+                "  - remember that my [key] is [value] (e.g., remember that my favorite editor is VS Code)\n"
+                "  - what is my [key]? (e.g., what is my favorite editor?)\n"
+                "  - forget my [key]\n"
+                "  - list memories\n"
                 "  - help\n"
                 "  - exit / quit"
             )
@@ -74,5 +80,21 @@ class CommandRouter:
             if not path:
                 return "Please specify a path to check."
             return self.files.check_exists(path)
+            
+        if intent == Intent.REMEMBER:
+            key = entities.get("key", "")
+            value = entities.get("value", "")
+            return self.memory.remember(key, value)
+            
+        if intent == Intent.RECALL:
+            key = entities.get("key", "")
+            return self.memory.recall(key)
+            
+        if intent == Intent.FORGET:
+            key = entities.get("key", "")
+            return self.memory.forget(key)
+            
+        if intent == Intent.LIST_MEMORIES:
+            return self.memory.list_all()
             
         return f"I don't understand '{parsed_intent.raw_input}'. Type 'help' for examples."
