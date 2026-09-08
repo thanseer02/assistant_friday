@@ -1,29 +1,35 @@
-from .intent import IntentParser
-from .router import CommandRouter
+from .action_parser import ActionParser
 from ai.local_model import OllamaModel
+from tools import get_default_registry
 
 class AssistantEngine:
     def __init__(self):
         """
-        Initialize the AssistantEngine.
-        It now acts as the orchestrator connecting the AI Parser and the Router.
+        Initialize the AssistantEngine using the new Tool-Based Architecture.
         """
-        # Instantiate the local LLM and inject it into the parser
-        # You can change "llama3" to "mistral" or any other locally installed model
+        # 1. Instantiate the tool registry
+        self.registry = get_default_registry()
+        
+        # 2. Instantiate the Local LLM
         self.llm = OllamaModel(model_name="llama3")
-        self.parser = IntentParser(llm=self.llm)
-        self.router = CommandRouter()
+        
+        # 3. Create the parser, injecting both the LLM and the Registry
+        self.parser = ActionParser(llm=self.llm, registry=self.registry)
         
     def process(self, user_input: str) -> str:
         """
         Process the user input in two clear steps:
-        1. AI Parser converts the raw string into a structured Intent.
-        2. Router safely executes the predefined logic.
+        1. Action Parser uses the LLM to structure the intent.
+        2. Tool Registry securely validates and executes the action.
         """
-        # Step 1: Use AI to understand what the user wants
-        parsed_intent = self.parser.parse(user_input)
+        # Step 1: LLM parsing
+        parsed_action = self.parser.parse(user_input)
         
-        # Step 2: Safely execute the action
-        response = self.router.route(parsed_intent)
+        # Step 2: Safe Execution
+        # The registry acts as a sandbox, validating the tool name and schema
+        response = self.registry.execute(
+            tool_name=parsed_action.tool_name, 
+            parameters=parsed_action.parameters
+        )
         
         return response
