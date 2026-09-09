@@ -17,6 +17,12 @@ add_exception_handlers(app)
 app.include_router(health.router, tags=["Health"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 
+from app.database.session import engine
+from app.models.conversation import Base
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
 @app.on_event("startup")
 async def startup_event():
     logger.info(f"Starting {settings.PROJECT_NAME}...")

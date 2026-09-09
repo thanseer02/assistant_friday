@@ -9,14 +9,14 @@ class AIService:
         self.model = settings.OLLAMA_MODEL
         self.timeout = 30.0 # 30 seconds timeout for LLM response
 
-    async def generate_response(self, message: str) -> str:
+    async def generate_response(self, messages: list[dict]) -> str:
         """
-        Communicates with the local Ollama server to generate a response.
+        Communicates with the local Ollama server to generate a response using chat history.
         """
-        url = f"{self.base_url}/api/generate"
+        url = f"{self.base_url}/api/chat"
         payload = {
             "model": self.model,
-            "prompt": message,
+            "messages": messages,
             "stream": False
         }
         
@@ -25,7 +25,7 @@ class AIService:
                 response = await client.post(url, json=payload)
                 response.raise_for_status()
                 data = response.json()
-                return data.get("response", "")
+                return data.get("message", {}).get("content", "")
                 
         except httpx.TimeoutException:
             logger.error("Timeout connecting to Ollama server.")

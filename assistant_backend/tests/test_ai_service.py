@@ -14,15 +14,16 @@ def ai_service():
 async def test_generate_response_success(mock_post, ai_service):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
-    mock_response.json.return_value = {"response": "Test response"}
+    mock_response.json.return_value = {"message": {"content": "Test response"}}
     mock_post.return_value = mock_response
     
-    response = await ai_service.generate_response("Test message")
+    history = [{"role": "user", "content": "Test message"}]
+    response = await ai_service.generate_response(history)
     assert response == "Test response"
     
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
-    assert kwargs["json"]["prompt"] == "Test message"
+    assert kwargs["json"]["messages"] == history
     assert kwargs["json"]["model"] == settings.OLLAMA_MODEL
 
 @pytest.mark.asyncio
@@ -30,8 +31,9 @@ async def test_generate_response_success(mock_post, ai_service):
 async def test_generate_response_timeout(mock_post, ai_service):
     mock_post.side_effect = httpx.TimeoutException("Timeout")
     
+    history = [{"role": "user", "content": "Test message"}]
     with pytest.raises(HTTPException) as excinfo:
-        await ai_service.generate_response("Test message")
+        await ai_service.generate_response(history)
         
     assert excinfo.value.status_code == 504
     assert excinfo.value.detail == "AI engine response timeout"
@@ -41,8 +43,9 @@ async def test_generate_response_timeout(mock_post, ai_service):
 async def test_generate_response_unavailable(mock_post, ai_service):
     mock_post.side_effect = httpx.RequestError("Connection Error")
     
+    history = [{"role": "user", "content": "Test message"}]
     with pytest.raises(HTTPException) as excinfo:
-        await ai_service.generate_response("Test message")
+        await ai_service.generate_response(history)
         
     assert excinfo.value.status_code == 503
     assert excinfo.value.detail == "AI engine is currently unavailable"
