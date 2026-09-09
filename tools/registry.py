@@ -29,10 +29,18 @@ class ToolRegistry:
         # Add fallback unknown tool
         metadata.append("- Tool: 'unknown' | Description: Use this if the user says hello or asks something you can't do. | JSON Parameters: None")
         
+        metadata.append("- Tool: 'help' | Description: Use this if the user asks for help or wants a list of things you can do. | JSON Parameters: None")
+        
         return "\n".join(metadata)
 
     def execute(self, tool_name: str, parameters: Dict[str, Any]) -> str:
         """Safely executes a tool after validating its existence and parameters."""
+        if tool_name == "help":
+            help_text = "Here is a list of things I can do:\n"
+            for name, tool_obj in self._tools.items():
+                help_text += f"- {name}: {tool_obj.description}\n"
+            return help_text.strip()
+            
         if tool_name == "unknown":
             return "I am a local assistant. How can I help you? (Type 'help' for a list of things I can do)"
             

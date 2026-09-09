@@ -19,9 +19,13 @@ class ActionParser:
         self.registry = registry
 
     def parse(self, user_input: str) -> ParsedAction:
-        normalized = user_input.strip()
+        normalized = user_input.strip().lower()
         if not normalized:
             return ParsedAction("unknown", {}, user_input)
+            
+        # Quick bypass for exact "help" command to save LLM processing time
+        if normalized == "help":
+            return ParsedAction("help", {}, user_input)
 
         # Dynamically fetch available tools
         available_tools = self.registry.get_all_tools_metadata()
