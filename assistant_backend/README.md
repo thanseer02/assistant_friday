@@ -43,3 +43,41 @@ uvicorn app.main:app --reload
 ```bash
 pytest
 ```
+
+## API Examples
+
+### Chat (Create or Continue Conversation)
+
+**Create a new conversation:**
+```json
+POST /api/chat
+{
+  "message": "My name is Alex"
+}
+```
+
+**Continue an existing conversation:**
+```json
+POST /api/chat
+{
+  "conversation_id": "your-uuid-here",
+  "message": "What is my name?"
+}
+```
+
+### Conversations Management
+
+**List all conversations:**
+```
+GET /api/conversations
+```
+
+**Retrieve a specific conversation (with messages):**
+```
+GET /api/conversations/{conversation_id}
+```
+
+**Delete a conversation:**
+```
+DELETE /api/conversations/{conversation_id}
+```

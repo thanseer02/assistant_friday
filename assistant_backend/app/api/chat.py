@@ -71,7 +71,7 @@ async def chat_endpoint(
         response_text = await ai_service.generate_response(
             history, 
             memories=memory_strings, 
-            tool_registry=tool_registry
+            tool_registry=None
         )
     except PendingActionException as e:
         # Create pending action in the database
