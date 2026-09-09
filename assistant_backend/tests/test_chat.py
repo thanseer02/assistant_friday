@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from unittest.mock import AsyncMock, MagicMock, patch
 from app.main import app
 
@@ -27,7 +27,7 @@ def mock_conversation_service():
 
 @pytest.mark.asyncio
 async def test_chat_endpoint(mock_ai_service, mock_conversation_service):
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         response = await ac.post("/api/chat", json={"message": "My name is Alex", "conversation_id": None})
     
     assert response.status_code == 200
