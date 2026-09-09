@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import PendingActionException
-from app.core.logging import logger
 
 class AIService:
     def __init__(self):
