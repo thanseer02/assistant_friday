@@ -18,12 +18,18 @@ async def test_generate_response_success(mock_post, ai_service):
     mock_post.return_value = mock_response
     
     history = [{"role": "user", "content": "Test message"}]
-    response = await ai_service.generate_response(history)
+    memories = ["favorite color: blue"]
+    response = await ai_service.generate_response(history, memories=memories)
     assert response == "Test response"
     
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
-    assert kwargs["json"]["messages"] == history
+    # Verify memory was injected
+    messages_sent = kwargs["json"]["messages"]
+    assert len(messages_sent) == 2
+    assert messages_sent[0]["role"] == "system"
+    assert "favorite color: blue" in messages_sent[0]["content"]
+    assert messages_sent[1]["role"] == "user"
     assert kwargs["json"]["model"] == settings.OLLAMA_MODEL
 
 @pytest.mark.asyncio

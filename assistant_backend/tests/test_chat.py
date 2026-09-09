@@ -8,6 +8,7 @@ def mock_ai_service():
     with patch("app.api.chat.AIService") as mock:
         instance = mock.return_value
         instance.generate_response = AsyncMock(return_value="Nice to meet you, Alex!")
+        instance.extract_memories = AsyncMock(return_value=[])
         yield instance
 
 @pytest.fixture
@@ -25,8 +26,15 @@ def mock_conversation_service():
         
         yield instance
 
+@pytest.fixture
+def mock_memory_service():
+    with patch("app.api.chat.MemoryService") as mock:
+        instance = mock.return_value
+        instance.search_memories.return_value = []
+        yield instance
+
 @pytest.mark.asyncio
-async def test_chat_endpoint(mock_ai_service, mock_conversation_service):
+async def test_chat_endpoint(mock_ai_service, mock_conversation_service, mock_memory_service):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         response = await ac.post("/api/chat", json={"message": "My name is Alex", "conversation_id": None})
     
@@ -38,4 +46,6 @@ async def test_chat_endpoint(mock_ai_service, mock_conversation_service):
     mock_conversation_service.get_or_create_conversation.assert_called_once_with(None)
     mock_conversation_service.add_message.assert_any_call("test-conv-id", "user", "My name is Alex")
     mock_conversation_service.add_message.assert_any_call("test-conv-id", "assistant", "Nice to meet you, Alex!")
-    mock_ai_service.generate_response.assert_called_once_with([{"role": "user", "content": "My name is Alex"}])
+    
+    # We pass an empty list of memories since we mock search_memories to return []
+    mock_ai_service.generate_response.assert_called_once_with([{"role": "user", "content": "My name is Alex"}], memories=[])
