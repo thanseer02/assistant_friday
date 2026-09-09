@@ -1,0 +1,25 @@
+from fastapi import FastAPI
+from app.core.config import settings
+from app.core.logging import logger
+from app.core.exceptions import add_exception_handlers
+from app.api import health
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+)
+
+# Exception handlers
+add_exception_handlers(app)
+
+# Include routers
+app.include_router(health.router, tags=["Health"])
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"Starting {settings.PROJECT_NAME}...")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info(f"Shutting down {settings.PROJECT_NAME}...")
