@@ -14,12 +14,25 @@ This project uses FastAPI, SQLAlchemy (SQLite), and provides a clean foundation 
 - `tests`: Pytest tests.
 
 ## Setup
-Create a virtual environment and install dependencies:
+1. **Ensure Ollama is installed and running**
+   You can download Ollama from [ollama.com](https://ollama.com/).
+   Pull your desired model, for example:
+   ```bash
+   ollama run llama3
+   ```
+
+2. **Create a virtual environment and install dependencies:**
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+3. **Configure the environment:**
+```bash
+cp .env.example .env
+```
+Edit `.env` to match your Ollama setup if needed (default is `http://localhost:11434` with model `llama3`).
 
 ## Run the Server
 ```bash

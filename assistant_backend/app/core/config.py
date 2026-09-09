@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     # SQLite Database Config
     DATABASE_URL: str = "sqlite:///./assistant.db"
     
+    # Ollama AI Engine Config
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3"
+    
     LOG_LEVEL: str = "INFO"
 
     model_config = ConfigDict(env_file=".env", case_sensitive=True)

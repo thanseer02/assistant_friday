@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import add_exception_handlers
-from app.api import health
+from app.api import health, chat
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -15,6 +15,7 @@ add_exception_handlers(app)
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
+app.include_router(chat.router, prefix="/api", tags=["Chat"])
 
 @app.on_event("startup")
 async def startup_event():
