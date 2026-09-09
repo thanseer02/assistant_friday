@@ -59,6 +59,16 @@ class AIService:
                             kwargs = func.get("arguments", {})
                             
                             logger.info(f"AI executing tool: {name} with args {kwargs}")
+                            
+                            tool = tool_registry.get_tool(name)
+                            if tool:
+                                from app.tools.base import PermissionLevel
+                                if tool.permission_level != PermissionLevel.READ:
+                                    from app.core.exceptions import PendingActionException
+                                    # Add the tool call message to final_messages so we don't lose the AI's intent
+                                    # but we raise the exception to halt the loop
+                                    raise PendingActionException(tool_name=name, arguments=kwargs)
+                                    
                             result = await tool_registry.execute_tool(name, kwargs)
                             
                             # 3. Append tool result

@@ -4,6 +4,9 @@ from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService
 from app.services.conversation_service import ConversationService
 from app.services.memory_service import MemoryService
+from app.services.action_service import ActionPermissionService
+from app.core.exceptions import PendingActionException
+from app.schemas.action import ActionRequest
 from app.database.session import get_db
 
 router = APIRouter()
@@ -58,12 +61,34 @@ async def chat_endpoint(
     # 5. Generate response via AI, injecting memories and tools
     # Important: Intermediate tool messages are ephemeral here to keep DB clean, 
     # but the AI gets the context for this turn.
-    response_text = await ai_service.generate_response(
-        history, 
-        memories=memory_strings, 
-        tool_registry=tool_registry
-    )
-    
+    try:
+        response_text = await ai_service.generate_response(
+            history, 
+            memories=memory_strings, 
+            tool_registry=tool_registry
+        )
+    except PendingActionException as e:
+        # Create pending action in the database
+        action_service = ActionPermissionService(conversation_service.db)
+        pending = action_service.create_pending_action(
+            conversation_id=conversation.id,
+            tool_name=e.tool_name,
+            arguments=e.arguments
+        )
+        # Return early with the pending action request
+        action_req = ActionRequest(
+            id=pending.id,
+            tool_name=pending.tool_name,
+            arguments=pending.arguments,
+            status=pending.status,
+            conversation_id=pending.conversation_id
+        )
+        return ChatResponse(
+            conversation_id=conversation.id,
+            response="Waiting for confirmation to execute tool...",
+            pending_action=action_req
+        )
+        
     # 6. Save AI final response
     conversation_service.add_message(conversation.id, "assistant", response_text)
     

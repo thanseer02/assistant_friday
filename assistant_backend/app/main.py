@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import add_exception_handlers
-from app.api import health, chat, memories
+from app.api import health, chat, memories, actions
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -17,10 +17,12 @@ add_exception_handlers(app)
 app.include_router(health.router, tags=["Health"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(memories.router, prefix="/api", tags=["Memories"])
+app.include_router(actions.router, prefix="/api", tags=["Actions"])
 
 from app.database.session import engine
 from app.models.conversation import Base
 from app.models.memory import Memory
+from app.models.action import PendingAction
 
 # Create tables
 Base.metadata.create_all(bind=engine)

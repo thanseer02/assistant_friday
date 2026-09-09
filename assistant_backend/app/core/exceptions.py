@@ -7,6 +7,13 @@ class AssistantException(Exception):
         self.message = message
         self.status_code = status_code
 
+class PendingActionException(AssistantException):
+    """Raised when a tool requires explicit user confirmation."""
+    def __init__(self, tool_name: str, arguments: dict):
+        self.tool_name = tool_name
+        self.arguments = arguments
+        super().__init__(f"Tool '{tool_name}' requires confirmation.", status_code=400)
+
 def add_exception_handlers(app: FastAPI):
     @app.exception_handler(AssistantException)
     async def assistant_exception_handler(request: Request, exc: AssistantException):
