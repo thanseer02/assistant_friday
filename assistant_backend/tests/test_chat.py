@@ -48,4 +48,10 @@ async def test_chat_endpoint(mock_ai_service, mock_conversation_service, mock_me
     mock_conversation_service.add_message.assert_any_call("test-conv-id", "assistant", "Nice to meet you, Alex!")
     
     # We pass an empty list of memories since we mock search_memories to return []
-    mock_ai_service.generate_response.assert_called_once_with([{"role": "user", "content": "My name is Alex"}], memories=[])
+    # Using ANY for tool_registry since it's the global instance
+    from unittest.mock import ANY
+    mock_ai_service.generate_response.assert_called_once_with(
+        [{"role": "user", "content": "My name is Alex"}], 
+        memories=[],
+        tool_registry=ANY
+    )

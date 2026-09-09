@@ -34,6 +34,39 @@ async def test_generate_response_success(mock_post, ai_service):
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient.post")
+async def test_generate_response_with_tool(mock_post, ai_service):
+    # First response: AI calls a tool
+    mock_response_1 = MagicMock()
+    mock_response_1.raise_for_status.return_value = None
+    mock_response_1.json.return_value = {
+        "message": {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{"function": {"name": "dummy_tool", "arguments": {}}}]
+        }
+    }
+    
+    # Second response: AI returns final answer
+    mock_response_2 = MagicMock()
+    mock_response_2.raise_for_status.return_value = None
+    mock_response_2.json.return_value = {"message": {"content": "Final answer"}}
+    
+    mock_post.side_effect = [mock_response_1, mock_response_2]
+    
+    # Mock registry
+    mock_registry = MagicMock()
+    mock_registry.get_ollama_tools.return_value = [{"type": "function", "function": {"name": "dummy_tool"}}]
+    mock_registry.execute_tool = AsyncMock(return_value="Tool result")
+    
+    history = [{"role": "user", "content": "Test message"}]
+    response = await ai_service.generate_response(history, tool_registry=mock_registry)
+    
+    assert response == "Final answer"
+    assert mock_post.call_count == 2
+    mock_registry.execute_tool.assert_called_once_with("dummy_tool", {})
+
+@pytest.mark.asyncio
+@patch("httpx.AsyncClient.post")
 async def test_generate_response_timeout(mock_post, ai_service):
     mock_post.side_effect = httpx.TimeoutException("Timeout")
     
