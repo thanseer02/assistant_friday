@@ -9,10 +9,11 @@ class AIService:
         self.model = settings.OLLAMA_MODEL
         self.timeout = 30.0 # 30 seconds timeout for LLM response
 
-    async def generate_response(self, messages: list[dict], memories: list[str] = None) -> str:
+    async def generate_response(self, messages: list[dict], memories: list[str] = None, tool_registry = None) -> str:
         """
         Communicates with the local Ollama server to generate a response using chat history.
         Informs the AI about relevant long-term memories if provided.
+        Handles tool calls safely via ToolRegistry if provided.
         """
         url = f"{self.base_url}/api/chat"
         
@@ -33,13 +34,45 @@ class AIService:
             "messages": final_messages,
             "stream": False
         }
+
+        if tool_registry:
+            ollama_tools = tool_registry.get_ollama_tools()
+            if ollama_tools:
+                payload["tools"] = ollama_tools
         
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(url, json=payload)
-                response.raise_for_status()
-                data = response.json()
-                return data.get("message", {}).get("content", "")
+                while True:
+                    response = await client.post(url, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    message = data.get("message", {})
+                    
+                    if "tool_calls" in message and tool_registry:
+                        # 1. Append the AI's tool call message
+                        final_messages.append(message)
+                        
+                        # 2. Execute tools safely
+                        for tool_call in message["tool_calls"]:
+                            func = tool_call.get("function", {})
+                            name = func.get("name")
+                            kwargs = func.get("arguments", {})
+                            
+                            logger.info(f"AI executing tool: {name} with args {kwargs}")
+                            result = await tool_registry.execute_tool(name, kwargs)
+                            
+                            # 3. Append tool result
+                            final_messages.append({
+                                "role": "tool",
+                                "content": result,
+                                "name": name
+                            })
+                            
+                        # Update payload and loop back to AI
+                        payload["messages"] = final_messages
+                    else:
+                        # Final response
+                        return message.get("content", "")
                 
         except httpx.TimeoutException:
             logger.error("Timeout connecting to Ollama server.")

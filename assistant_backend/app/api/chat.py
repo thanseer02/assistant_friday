@@ -27,6 +27,13 @@ async def background_extract_memories(message: str, ai_service: AIService, memor
                 category=mem.get("category", "fact")
             )
 
+from app.tools.registry import ToolRegistry
+from app.tools.time_tool import GetCurrentTimeTool
+
+# Global or app-level registry
+tool_registry = ToolRegistry()
+tool_registry.register(GetCurrentTimeTool())
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(
     request: ChatRequest, 
@@ -48,10 +55,16 @@ async def chat_endpoint(
     memories_db = memory_service.search_memories(request.message)
     memory_strings = [f"{m.key}: {m.value}" for m in memories_db]
     
-    # 5. Generate response via AI, injecting memories
-    response_text = await ai_service.generate_response(history, memories=memory_strings)
+    # 5. Generate response via AI, injecting memories and tools
+    # Important: Intermediate tool messages are ephemeral here to keep DB clean, 
+    # but the AI gets the context for this turn.
+    response_text = await ai_service.generate_response(
+        history, 
+        memories=memory_strings, 
+        tool_registry=tool_registry
+    )
     
-    # 6. Save AI response
+    # 6. Save AI final response
     conversation_service.add_message(conversation.id, "assistant", response_text)
     
     # 7. Background task: Extract and save new memories from user message
