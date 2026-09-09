@@ -32,10 +32,12 @@ async def background_extract_memories(message: str, ai_service: AIService, memor
 
 from app.tools.registry import ToolRegistry
 from app.tools.time_tool import GetCurrentTimeTool
+from app.tools.reminder_tool import CreateReminderTool
 
 # Global or app-level registry
 tool_registry = ToolRegistry()
 tool_registry.register(GetCurrentTimeTool())
+tool_registry.register(CreateReminderTool())
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(
