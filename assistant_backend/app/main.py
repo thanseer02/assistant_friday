@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import add_exception_handlers
-from app.api import health, chat, memories, actions, telegram, whatsapp
+from app.api import health, chat, memories, actions, telegram, whatsapp, conversations
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -20,6 +20,7 @@ app.include_router(memories.router, prefix="/api", tags=["Memories"])
 app.include_router(actions.router, prefix="/api", tags=["Actions"])
 app.include_router(telegram.router, tags=["Webhooks"])
 app.include_router(whatsapp.router, tags=["Webhooks"])
+app.include_router(conversations.router, prefix="/api", tags=["Conversations"])
 
 from app.database.session import engine
 from app.models.conversation import Base

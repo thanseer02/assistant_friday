@@ -65,7 +65,6 @@ class AIService:
                             if tool:
                                 from app.tools.base import PermissionLevel
                                 if tool.permission_level != PermissionLevel.READ:
-                                    from app.core.exceptions import PendingActionException
                                     # Add the tool call message to final_messages so we don't lose the AI's intent
                                     # but we raise the exception to halt the loop
                                     raise PendingActionException(tool_name=name, arguments=kwargs)

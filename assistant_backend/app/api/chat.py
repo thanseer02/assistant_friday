@@ -48,7 +48,11 @@ async def chat_endpoint(
     memory_service: MemoryService = Depends(get_memory_service)
 ):
     # 1. Get or create conversation
-    conversation = conversation_service.get_or_create_conversation(request.conversation_id)
+    try:
+        conversation = conversation_service.get_or_create_conversation(request.conversation_id)
+    except ValueError as e:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     
     # 2. Save the user message
     conversation_service.add_message(conversation.id, "user", request.message)

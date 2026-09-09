@@ -7,9 +7,10 @@ class ConversationService:
 
     def get_or_create_conversation(self, conversation_id: str | None = None) -> Conversation:
         if conversation_id:
-            conversation = self.db.query(Conversation).filter(Conversation.id == conversation_id).first()
-            if conversation:
-                return conversation
+            conversation = self.get_conversation(conversation_id)
+            if not conversation:
+                raise ValueError(f"Conversation {conversation_id} not found")
+            return conversation
         
         # Create a new conversation
         new_conversation = Conversation(title="New Chat")
@@ -17,6 +18,20 @@ class ConversationService:
         self.db.commit()
         self.db.refresh(new_conversation)
         return new_conversation
+
+    def get_conversation(self, conversation_id: str) -> Conversation | None:
+        return self.db.query(Conversation).filter(Conversation.id == conversation_id).first()
+
+    def get_all_conversations(self) -> list[Conversation]:
+        return self.db.query(Conversation).order_by(Conversation.updated_at.desc()).all()
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        conversation = self.get_conversation(conversation_id)
+        if not conversation:
+            return False
+        self.db.delete(conversation)
+        self.db.commit()
+        return True
 
     def add_message(self, conversation_id: str, role: str, content: str) -> Message:
         message = Message(
