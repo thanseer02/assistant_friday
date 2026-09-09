@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # Ollama AI Engine Config
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3"
+
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_WEBHOOK_SECRET: str = ""
     
     LOG_LEVEL: str = "INFO"
 
