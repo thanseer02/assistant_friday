@@ -2,6 +2,8 @@ import httpx
 from fastapi import HTTPException
 from app.core.config import settings
 from app.core.logging import logger
+from app.core.exceptions import PendingActionException
+from app.core.logging import logger
 
 class AIService:
     def __init__(self):
@@ -91,6 +93,10 @@ class AIService:
         except httpx.RequestError as e:
             logger.error(f"Error communicating with Ollama server: {e}")
             raise HTTPException(status_code=503, detail="AI engine is currently unavailable")
+            
+        except PendingActionException:
+            # Let this bubble up to be caught by the router
+            raise
             
         except Exception as e:
             logger.error(f"Unexpected error in AI service: {e}")

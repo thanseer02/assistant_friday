@@ -56,6 +56,12 @@ async def test_generate_response_with_tool(mock_post, ai_service):
     # Mock registry
     mock_registry = MagicMock()
     mock_registry.get_ollama_tools.return_value = [{"type": "function", "function": {"name": "dummy_tool"}}]
+    
+    mock_tool = MagicMock()
+    from app.tools.base import PermissionLevel
+    mock_tool.permission_level = PermissionLevel.READ
+    mock_registry.get_tool.return_value = mock_tool
+    
     mock_registry.execute_tool = AsyncMock(return_value="Tool result")
     
     history = [{"role": "user", "content": "Test message"}]
